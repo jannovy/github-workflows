@@ -1,0 +1,21 @@
+name: Create Branch on Issue Creation
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Remove diacritics from issue title and replace spaces
+      env:
+        TITLE: $(echo "${{ github.event.issue.title }}" | iconv -f utf-8 -t ascii//TRANSLIT | tr '[:space:]' '-' | sed 's/.$//')
+      run: echo "TITLE=${{ env.TITLE }}" >> $GITHUB_ENV
+    - name: Create branch
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git checkout -b feature/${{ github.event.issue.number }}-${{ env.TITLE }}
+        git push --set-upstream origin feature/${{ github.event.issue.number }}-${{ env.TITLE }}
